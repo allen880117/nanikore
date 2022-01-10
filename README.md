@@ -50,3 +50,8 @@ Board of directors should confirm the request with `confirmIssueRequest`
 
 Once the minimum number of confirmation is fulfilled, the contract will be executed automatically, transferring the stocks to the customer.
 
+## Opensea Screenshot
+
+![](https://i.imgur.com/Y0UiiJ8.png)
+
+https://testnets.opensea.io/assets/0xc3eb5e0fe72388b41b756dfa25120a077bd4f9e2/0
