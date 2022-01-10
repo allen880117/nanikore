@@ -24,6 +24,16 @@ Call *`safeTransferFrom`* with following arguments
 
 ## How to issue stocks (for board of directors)
 
+### Deploy
+
+To deploy the smart contract, following parameters are required:
+* *`_OWNERS`*: a list of owners' address
+* *`_NUMCONFIRMATIONSREQUIRED`*: the minimum confirmation required for each issued request to be executed
+* *`_ORIGINALSHARE`*: initial number of issued stock units
+
+![](https://i.imgur.com/onBdyVq.png)
+
+
 ### Issue stocks
 
 Customers should submit requests through *`submitIssueRequest`* with following arguments
@@ -38,5 +48,5 @@ Board of directors should confirm the request with `confirmIssueRequest`
 
 ![](https://i.imgur.com/MYDZAW4.png)
 
-Once every memeber of the board has confirmed the request, the contract will be executed automatically, transferring the stocks to the customer.
+Once the minimum number of confirmation is fulfilled, the contract will be executed automatically, transferring the stocks to the customer.
 
