@@ -55,8 +55,9 @@ contract Nanikore is ERC1155 {
     }
 
     constructor(address[] memory _owners, uint _numConfirmationsRequired) 
-        public 
-        ERC1155("https://abcoathup.github.io/SampleERC1155/api/token/{id}.json") 
+        public
+        ERC1155("https://raw.githubusercontent.com/allen880117/nanikore/main/metadata/token/{id}.json") 
+        // ERC1155("https://abcoathup.github.io/SampleERC1155/api/token/{id}.json") 
     {
         _mint(msg.sender, GOLD, 300, "");
 
