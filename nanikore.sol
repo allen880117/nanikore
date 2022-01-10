@@ -18,6 +18,7 @@ contract Nanikore is ERC1155 {
     event ExecuteTransaction(address indexed owner, uint indexed txIndex);
 
     address[] public owners;
+    address contractCreator;
     mapping(address => bool) public isOwner;
     uint public numConfirmationsRequired;
 
@@ -54,15 +55,10 @@ contract Nanikore is ERC1155 {
         _;
     }
 
-    constructor(address[] memory _owners, uint _numConfirmationsRequired) 
+    constructor(address[] memory _owners, uint _numConfirmationsRequired, uint _originalShare) 
         public
-        ERC1155("https://raw.githubusercontent.com/allen880117/nanikore/main/metadata/token/{id}.json") 
-        // ERC1155("https://abcoathup.github.io/SampleERC1155/api/token/{id}.json") 
+        ERC1155("https://raw.githubusercontent.com/allen880117/nanikore/main/metadata/token/{id}.json")
     {
-        _mint(msg.sender, GOLD, 300, "");
-
-        // // --- //
-
         require(_owners.length > 0, "owners required");
         require(
             _numConfirmationsRequired > 0 &&
@@ -80,37 +76,40 @@ contract Nanikore is ERC1155 {
             owners.push(owner);
         }
 
+        require(isOwner[msg.sender], "Contract creator is not in owner list");
+
+        contractCreator = msg.sender;
         numConfirmationsRequired = _numConfirmationsRequired;
+        _mint(msg.sender, GOLD, _originalShare, "");
     }
 
-    function getGold(address addr)
+    function getStock(address addr)
         view public returns (uint256)
     {
         return balanceOf(addr, 0);
     }
 
-    function burnGold(address addr, uint amount)
+    function burnStock(address addr, uint amount)
         public
         onlyOwner
     {
         _burn(addr, GOLD, amount);
     }
 
-    function mintGold(address addr, uint amount)
+    function mintStock(uint amount)
         public
         onlyOwner
     {
-        _mint(addr, GOLD, amount, "");
+        _mint(contractCreator, GOLD, amount, "");
     }
 
-    function submitTransaction(
+    function submitIssueRequest(
         address _to,
         uint _value
-    ) public onlyOwner {
+    ) public {
+        uint remain = balanceOf(contractCreator, GOLD);
+        require(remain >= _value, "not enough stocks to give");
         uint txIndex = transactions.length;
-
-        uint senderAmount = balanceOf(msg.sender, GOLD);
-        require(_value <= senderAmount, "the amount of GOLD we have is not enought");
 
         transactions.push(
             Transaction({
@@ -125,7 +124,8 @@ contract Nanikore is ERC1155 {
         emit SubmitTransaction(msg.sender, txIndex, _to, _value);
     }
 
-    function confirmTransaction(uint _txIndex)
+    // Owners approve pending transactions
+    function confirmIssueRequest(uint _txIndex)
         public
         onlyOwner
         txExists(_txIndex)
@@ -136,25 +136,28 @@ contract Nanikore is ERC1155 {
         transaction.numConfirmations += 1;
         isConfirmed[_txIndex][msg.sender] = true;
 
+        if (transaction.numConfirmations >= numConfirmationsRequired) {
+            executeTransaction(_txIndex);
+        }
+
         emit ConfirmTransaction(msg.sender, _txIndex);
     }
 
     function executeTransaction(uint _txIndex)
-        public
-        onlyOwner
+        private
         txExists(_txIndex)
         notExecuted(_txIndex)
     {
-        Transaction storage transaction = transactions[_txIndex];
+        Transaction storage txn = transactions[_txIndex];
 
         require(
-            transaction.numConfirmations >= numConfirmationsRequired,
-            "cannot execute tx"
+            txn.numConfirmations >= numConfirmationsRequired,
+            "too few confirmations"
         );
 
-        transaction.executed = true;
+        txn.executed = true;
 
-        mintGold(transaction.to, transaction.value);
+        safeTransferFrom(contractCreator, txn.to, GOLD, txn.value, txn.data);
 
         emit ExecuteTransaction(msg.sender, _txIndex);
     }
